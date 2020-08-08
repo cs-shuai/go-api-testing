@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"gopkg.in/check.v1"
 	"jccAPITest/common"
 )
@@ -26,7 +25,7 @@ type Goods struct {
 }
 
 func init() {
-	common.RegisterCheck(new(Goods))
+	// common.RegisterCheck(new(Goods))
 }
 
 func (g *Goods) UrlPath() string {
@@ -34,7 +33,7 @@ func (g *Goods) UrlPath() string {
 }
 
 func (g *Goods) SetUpSuite(c *check.C) {
-	fmt.Println("-----------SetUpSuiteSetUpSuite----" + fmt.Sprint() + "---------------")
+	// fmt.Println("-----------SetUpSuiteSetUpSuite----" + fmt.Sprint() + "---------------")
 	l := new(Login)
 	l.TestLoginSuccess(c)
 	g.Token = l.Response.JSON().Object().Raw()["token"].(string)
@@ -45,6 +44,6 @@ func (g *Goods) TestSuccess(c *check.C) {
 	g.Status = "2"
 	res := common.HttpPost(c, g)
 	ob := res.JSON().Object()
-	fmt.Println("---------------" + fmt.Sprint(ob) + "---------------")
+	// fmt.Println("---------------" + fmt.Sprint(ob) + "---------------")
 	ob.Value("msg").Equal("操作成功")
 }
