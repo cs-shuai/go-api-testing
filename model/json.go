@@ -102,7 +102,7 @@ func (jt *JsonTesting) NewTesting(requestData interface{}) common.AutoTesting {
  */
 func (jt *JsonTesting) TestRun(c *check.C) common.AutoTesting {
 	jt.C = c
-	// fmt.Println("---------testtest------" + fmt.Sprint(test) + "---------------")
+	// fmt.Println("---------------" + fmt.Sprint(test) + "---------------")
 	jt.Request().ResponseCheck()
 
 	return jt
