@@ -6,6 +6,9 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
 	"jccAPITest/common"
+	"jccAPITest/validation"
+	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -51,6 +54,13 @@ func (jt *JsonTesting) HandleUrlCode(gat common.GoApiTesting) map[string]interfa
 
 var isLogin bool
 
+func (jt *JsonTesting) SetUpTest(c *check.C) {
+	jt.Validation()
+
+}
+func (jt *JsonTesting) TearDownSuite(c *check.C) {
+	jt.Validation()
+}
 func (jt *JsonTesting) SetUpSuite(c *check.C) {
 	if !isLogin {
 		jt.C = c
@@ -58,16 +68,31 @@ func (jt *JsonTesting) SetUpSuite(c *check.C) {
 		login := new(Login)
 		login.TestLoginSuccess(jt.C)
 		token := login.Response.JSON().Object().Raw()["token"].(string)
-		common.AddHeaderGlobal(jt.TokenKey, token)
-		common.AddParamsGlobal(jt.TokenKey, token)
+		jt.AddHeader(jt.TokenKey, token)
+		jt.AddParams(jt.TokenKey, token)
 
 		isLogin = true
 	}
-
+	jt.Validation()
 }
 func (jt *JsonTesting) SetUp() {}
 func (jt *JsonTesting) TearDown() {
 	// fmt.Println("-----------JsonTesting-TearDown---" + fmt.Sprint() + "---------------")
+}
+func (jt *JsonTesting) AddHeader(key, value string) {
+	common.AddHeaderGlobal(key, value)
+}
+
+func (jt *JsonTesting) AddParams(key string, value interface{}) {
+	common.AddParamsGlobal(key, value)
+}
+
+func (jt *JsonTesting) GetHeader() map[string]string {
+	return common.GetHeaderGlobal()
+}
+
+func (jt *JsonTesting) GetParams() map[string]interface{} {
+	return common.GetParamsGlobal()
 }
 
 /**
@@ -103,7 +128,7 @@ func (jt *JsonTesting) NewTesting(requestData interface{}) common.AutoTesting {
 func (jt *JsonTesting) TestRun(c *check.C) common.AutoTesting {
 	jt.C = c
 	// fmt.Println("---------------" + fmt.Sprint(test) + "---------------")
-	jt.Request().ResponseCheck()
+	jt.Request()
 
 	return jt
 }
@@ -143,6 +168,7 @@ func (jt *JsonTesting) ResponseCheck() common.AutoTesting {
 	}
 
 	jt.Response.JSON().Object().Value(responseKey).Equal(equalValue)
+	jt.Response.JSON().Object().Value(responseKey).Equal("111")
 	return jt
 }
 
@@ -151,5 +177,33 @@ func (jt *JsonTesting) GetWaitGroup() *sync.WaitGroup {
 }
 
 func (jt *JsonTesting) TearDownTest(c *check.C) {
+	jt.Validation()
 	jt.GetWaitGroup().Done()
+
+}
+
+func (jt *JsonTesting) Validation() {
+	funcName := getFuncName(2)
+	for _, v := range validation.CheckList {
+		if v.GetRunFunc() == funcName {
+			// fmt.Println("---------------" + fmt.Sprint(jt.RequestData) + "---------------")
+			if value, ok := jt.RequestData[v.GetJsonKey()]; ok {
+				// fmt.Println("---------------" + fmt.Sprint(value) + "---------------")
+
+				v.SetJsonValue(value)
+				v.Run(jt.Response, &jt.RequestData)
+			}
+			// fmt.Println("---------------" + fmt.Sprint(jt.RequestData) + "---------------")
+		}
+	}
+}
+
+func getFuncName(skip int) string {
+	// 获取上一个执行方法位置
+	pc, _, _, _ := runtime.Caller(skip)
+	// 获取方法名
+	fn := runtime.FuncForPC(pc).Name()
+	mn := strings.Split(fn, ".")
+
+	return mn[len(mn)-1]
 }

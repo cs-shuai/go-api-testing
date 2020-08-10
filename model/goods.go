@@ -37,7 +37,6 @@ func (g *Goods) SetUpSuite(c *check.C) {
 	l := new(Login)
 	l.TestLoginSuccess(c)
 	g.Token = l.Response.JSON().Object().Raw()["token"].(string)
-	common.SetHeaderToken(g.Token)
 }
 
 func (g *Goods) TestSuccess(c *check.C) {

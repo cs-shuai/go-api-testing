@@ -13,7 +13,6 @@ import (
 )
 
 var Host string
-var Token string
 var TestList []GoApiTesting
 var RootPath string
 
@@ -27,7 +26,6 @@ type AutoTesting interface {
 	NewTesting(interface{}) AutoTesting
 	TestRun(*check.C) AutoTesting
 	Request() AutoTesting
-	ResponseCheck() AutoTesting
 	SetUp()
 	TearDown()
 	GetWaitGroup() *sync.WaitGroup
@@ -45,6 +43,10 @@ type GoApiTesting interface {
 	SetResponse(*httpexpect.Response)
 	HandleParam(GoApiTesting) map[string]interface{}
 	HandleUrlCode(GoApiTesting) map[string]interface{}
+	AddHeader(key, value string)
+	AddParams(key string, value interface{})
+	GetHeader() map[string]string
+	GetParams() map[string]interface{}
 }
 
 // 测试基础类
@@ -62,17 +64,17 @@ type jsonFile struct {
 
 func (t *BaseJccAPITesting) Initialization() {}
 
-func (t *BaseJccAPITesting) SetUpSuite(c *check.C) {}
+func (t *BaseJccAPITesting) SetUpSuite(_ *check.C) {}
 
-func (t *BaseJccAPITesting) TearDownSuite(c *check.C) {}
+func (t *BaseJccAPITesting) TearDownSuite(_ *check.C) {}
 
-func (t *BaseJccAPITesting) SetUpTest(c *check.C) {}
+func (t *BaseJccAPITesting) SetUpTest(_ *check.C) {}
 
 func (t *BaseJccAPITesting) SetResponse(response *httpexpect.Response) {
 	t.Response = response
 }
 
-func (t *BaseJccAPITesting) TearDownTest(c *check.C) {}
+func (t *BaseJccAPITesting) TearDownTest(_ *check.C) {}
 
 func (t *BaseJccAPITesting) HandleUrlCode(gat GoApiTesting) map[string]interface{} {
 	m := make(map[string]interface{})
@@ -101,6 +103,21 @@ func (t *BaseJccAPITesting) HandleParam(gat GoApiTesting) map[string]interface{}
 	}
 
 	return m
+}
+func (t *BaseJccAPITesting) AddHeader(key, value string) {
+	headerGlobal[key] = value
+}
+
+func (t *BaseJccAPITesting) AddParams(key string, value interface{}) {
+	paramsGlobal[key] = value
+}
+
+func (t *BaseJccAPITesting) GetHeader() map[string]string {
+	return headerGlobal
+}
+
+func (t *BaseJccAPITesting) GetParams() map[string]interface{} {
+	return paramsGlobal
 }
 
 /**
@@ -136,6 +153,7 @@ func AutoTestRun(testingT *testing.T, t AutoTesting) {
 	// 获取文件地址
 	files, _ := ioutil.ReadDir(viper.GetString("JSON_ROUTE_PATH"))
 	// fmt.Println("---------------" + fmt.Sprint(files) + "---------------")
+	t.SetUp()
 
 	// 读取文件
 	for _, f := range files {

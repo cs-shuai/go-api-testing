@@ -26,8 +26,16 @@ func AddHeaderGlobal(key, value string) {
 	headerGlobal[key] = value
 }
 
-func AddParamsGlobal(key, value string) {
+func AddParamsGlobal(key string, value interface{}) {
 	paramsGlobal[key] = value
+}
+
+func GetHeaderGlobal() map[string]string {
+	return headerGlobal
+}
+
+func GetParamsGlobal() map[string]interface{} {
+	return paramsGlobal
 }
 
 // 注册校验
@@ -52,7 +60,7 @@ func HttpGet(c *check.C, t GoApiTesting) *httpexpect.Response {
 	m := t.HandleUrlCode(t)
 
 	// 与全局参数合并
-	for k, v := range paramsGlobal {
+	for k, v := range t.GetParams() {
 		if _, ok := m[k]; !ok {
 			m[k] = v
 		}
@@ -67,8 +75,9 @@ func HttpGet(c *check.C, t GoApiTesting) *httpexpect.Response {
 	for key, value := range m {
 		request.WithQuery(key, value)
 	}
+
 	// 头处理
-	for key, value := range headerGlobal {
+	for key, value := range t.GetHeader() {
 		request.WithHeader(key, value)
 	}
 	r := request.Expect().
@@ -107,7 +116,7 @@ func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Respon
 	m := t.HandleParam(t)
 
 	// 与全局参数合并
-	for k, v := range paramsGlobal {
+	for k, v := range t.GetParams() {
 		if _, ok := m[k]; !ok {
 			m[k] = v
 		}
@@ -120,7 +129,7 @@ func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Respon
 	request := e.POST(uri)
 
 	// 头处理
-	for key, value := range headerGlobal {
+	for key, value := range t.GetHeader() {
 		request.WithHeader(key, value)
 	}
 
@@ -181,16 +190,6 @@ func structToUrlCode(t GoApiTesting) map[string]interface{} {
 }
 
 /**
- * 设置TOKEN
- * @Author: cs_shuai
- * @Date: 2020-08-05
- */
-func SetHeaderToken(token string) {
-	// fmt.Println("---------token------" + fmt.Sprint(token) + "---------------")
-	Token = token
-}
-
-/**
  * 从json文件中获取参数
  * @Author: cs_shuai
  * @Date: 2020-08-05
@@ -226,11 +225,11 @@ func paramRandomByStruct(t GoApiTesting) {
 			// fmt.Println("---------------" + fmt.Sprint(str) + "---------------")
 			sv.Field(i).SetString(str)
 		case "int":
-			int := rand.Intn(10)
-			sv.Field(i).SetInt(int64(int))
+			_int := rand.Intn(10)
+			sv.Field(i).SetInt(int64(_int))
 		case "int64":
-			int := rand.Intn(10)
-			sv.Field(i).SetInt(int64(int))
+			_int := rand.Intn(10)
+			sv.Field(i).SetInt(int64(_int))
 		}
 	}
 
@@ -250,11 +249,11 @@ func paramRandom(t GoApiTesting) {
 				// fmt.Println("---------------" + fmt.Sprint(str) + "---------------")
 				sv.Field(i).SetString(str)
 			case "int":
-				int := rand.Intn(10)
-				sv.Field(i).SetInt(int64(int))
+				_int := rand.Intn(10)
+				sv.Field(i).SetInt(int64(_int))
 			case "int64":
-				int := rand.Intn(10)
-				sv.Field(i).SetInt(int64(int))
+				_int := rand.Intn(10)
+				sv.Field(i).SetInt(int64(_int))
 			}
 		}
 	}
@@ -277,11 +276,11 @@ func randomString(len int) string {
  * @Date: 2020-08-06
  */
 func HandleFileName(file string) (string, string) {
-	filenameall := path.Base(file)
-	filesuffix := path.Ext(file)
-	fileprefix := filenameall[0 : len(filenameall)-len(filesuffix)]
+	fileNameAll := path.Base(file)
+	fileSuffix := path.Ext(file)
+	filePrefix := fileNameAll[0 : len(fileNameAll)-len(fileSuffix)]
 
-	return fileprefix, filesuffix
+	return filePrefix, fileSuffix
 }
 
 /**
@@ -290,13 +289,13 @@ func HandleFileName(file string) (string, string) {
  * @Date: 2020-08-07
  */
 func checkFileTypeToStruct(fileName, path string) *jsonFile {
-	fileprefix, filesuffix := HandleFileName(fileName)
+	filePrefix, fileSuffix := HandleFileName(fileName)
 	jf := new(jsonFile)
 	jf.Path = path + fileName
 	jf.FileName = fileName
-	jf.FilePrefix = fileprefix
-	jf.FileSuffix = filesuffix
-	if filesuffix != ".json" {
+	jf.FilePrefix = filePrefix
+	jf.FileSuffix = fileSuffix
+	if fileSuffix != ".json" {
 		panic("文件类型异常: " + fileName)
 	}
 
