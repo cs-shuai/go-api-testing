@@ -5,12 +5,7 @@
     "response" : "操作成功"
   },
   {
-    "username": "auto",
-    "pwd": "1232",
-    "response" : "用户不存在"
-  },
-  {
-    "username": "丛力强2",
+    "username": "丛力强1",
     "pwd": "1232",
     "response" : "用户不存在"
   }

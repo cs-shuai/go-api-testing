@@ -30,6 +30,7 @@ type AutoTesting interface {
 	TearDown()
 	GetWaitGroup() *sync.WaitGroup
 	InitWaitGroup()
+	GetRouteDir() string
 }
 
 // 接口测试接口类
@@ -149,25 +150,27 @@ func ConfigInit() {
  * @Author: cs_shuai
  * @Date: 2020-08-07
  */
-func AutoTestRun(testingT *testing.T, t AutoTesting) {
+func AutoTestRun(testingT *testing.T, ts ...AutoTesting) {
 
-	// 获取文件地址
-	files, _ := ioutil.ReadDir(viper.GetString("JSON_ROUTE_PATH"))
-	// fmt.Println("---------------" + fmt.Sprint(files) + "---------------")
-	t.SetUp()
-	t.InitWaitGroup()
-	// 读取文件
-	for _, f := range files {
-		// 获取数据
-		allArr := GetParamsByJsonFile(f.Name(), viper.GetString("JSON_ROUTE_PATH"))
+	for _, t := range ts {
+		// 获取文件地址
+		files, _ := ioutil.ReadDir(t.GetRouteDir())
+		// fmt.Println("---------------" + fmt.Sprint(files) + "---------------")
+		t.SetUp()
+		t.InitWaitGroup()
+		// 读取文件
+		for _, f := range files {
+			// 获取数据
+			allArr := GetParamsByJsonFile(f.Name(), t.GetRouteDir())
 
-		// 处理并注册到测试
-		for _, requestData := range allArr {
-			t.NewTesting(requestData)
+			// 处理并注册到测试
+			for _, requestData := range allArr {
+				t.NewTesting(requestData)
+			}
 		}
-	}
 
-	check.TestingT(testingT)
-	t.GetWaitGroup().Wait()
-	t.TearDown()
+		check.TestingT(testingT)
+		t.GetWaitGroup().Wait()
+		t.TearDown()
+	}
 }

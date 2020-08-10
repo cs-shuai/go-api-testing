@@ -69,10 +69,19 @@ func (jt *JsonTesting) SetUpSuite(c *check.C) {
 		// fmt.Println("-----------JsonTesting-SetUp---" + fmt.Sprint() + "---------------")
 		login := new(Login)
 		login.TestLoginSuccess(jt.C)
-		token := login.Response.JSON().Object().Raw()["token"].(string)
-		jt.AddHeader(jt.TokenKey, token)
-		jt.AddParams(jt.TokenKey, token)
+		pmToken := login.Response.JSON().Object().Raw()["token"].(string)
+		jt.AddHeader("PmToken", pmToken)
+		jt.AddParams("PmToken", pmToken)
 
+		storeLogin := new(StoreLogin)
+		storeLogin.TestLoginSuccess(jt.C)
+		token := storeLogin.Response.JSON().Object().Raw()["token"].(string)
+		jt.AddHeader("Token", token)
+		jt.AddParams("Token", token)
+
+		// jt.AddHeader("PmToken", "e611c721-a4d2-40cb-a8c3-6c8995e495b5")
+		// jt.AddHeader("Token", "a2ae8a7e-b705-43ea-bd38-c91721aab743")
+		// jt.AddHeader("MemberToken", "a2ae8a7e-b705-43ea-bd38-c91721aab743")
 		isLogin = true
 	}
 	jt.Validation()
@@ -84,6 +93,9 @@ func (jt *JsonTesting) TearDownTest(c *check.C) {
 
 func (jt *JsonTesting) SetUp()    {}
 func (jt *JsonTesting) TearDown() {}
+func (jt *JsonTesting) GetRouteDir() string {
+	return viper.GetString("JSON_ROUTE_PATH")
+}
 
 /**
  * 添加头数据

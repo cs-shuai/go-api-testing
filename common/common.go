@@ -1,10 +1,12 @@
 package common
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/gavv/httpexpect"
 	"gopkg.in/check.v1"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -323,17 +325,48 @@ func GetParamsByJsonFile(fileName, path string) (result []interface{}) {
 	jf := checkFileTypeToStruct(fileName, path)
 
 	filename := RootPath + path + jf.FileName
-	fileObj, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer fileObj.Close()
-	content, err := ioutil.ReadAll(fileObj)
+	// fileObj, err := os.Open(filename)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer fileObj.Close()
+	// content, err := ioutil.ReadAll(fileObj)
+	fmt.Println("---------------" + fmt.Sprint(filename) + "---------------")
+	content := ReadJson(filename)
 	// fmt.Println(string(content))
-	err = json.Unmarshal(content, &result)
+	err := json.Unmarshal([]byte(content), &result)
 	if err != nil {
 		panic(err)
 	}
 
+	return result
+}
+
+/**
+ * 读取Json
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
+func ReadJson(filePath string) (result string) {
+	file, err := os.Open(filePath)
+	defer file.Close()
+	if err != nil {
+		fmt.Println("ERROR:", err)
+	}
+	buf := bufio.NewReader(file)
+	for {
+		s, err := buf.ReadString('\n')
+		if strings.HasPrefix(s, "//") {
+			continue
+		}
+		result += s
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				panic(err)
+			}
+		}
+	}
 	return result
 }

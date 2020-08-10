@@ -1,5 +1,7 @@
 package model
 
+import "github.com/spf13/viper"
+
 /**
  * 分组自动测试
  * @Author: cs_shuai
@@ -25,4 +27,7 @@ func (jgt *JsonGroupTesting) GetHeader() map[string]string {
 
 func (jgt *JsonGroupTesting) GetParams() map[string]interface{} {
 	return jgt.Params
+}
+func (jgt *JsonGroupTesting) GetRouteDir() string {
+	return viper.GetString("JSON_GROUP_ROUTE_PATH")
 }

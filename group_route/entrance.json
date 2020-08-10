@@ -1,0 +1,14 @@
+[
+  {
+    "request_url": "manager/pm_user/user_login",
+    "request_data_url": "login.json",
+    "type": "Post",
+    "addr": "PmToken"
+  },
+  {
+    "request_url": "manager/pm_member/select_members",
+    "request_data_url": "select_member.json",
+    "type": "Get",
+    "addr": "PmToken"
+  }
+]
