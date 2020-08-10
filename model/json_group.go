@@ -1,5 +1,10 @@
 package model
 
+/**
+ * 分组自动测试
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 type JsonGroupTesting struct {
 	Header map[string]string
 	Params map[string]interface{}

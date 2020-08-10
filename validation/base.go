@@ -2,7 +2,7 @@ package validation
 
 import "github.com/gavv/httpexpect"
 
-var CheckList []BaseInterface
+var CheckList []BaseValidationInterface
 
 const (
 	SetUpSuite    = "SetUpSuite"
@@ -16,7 +16,7 @@ const (
  * @Author: cs_shuai
  * @Date: 2020-08-10
  */
-type BaseInterface interface {
+type BaseValidationInterface interface {
 	GetJsonKey() string
 	GetRunFunc() string
 	SetJsonValue(interface{})
@@ -29,6 +29,6 @@ type BaseInterface interface {
  * @Author: cs_shuai
  * @Date: 2020-08-10
  */
-func Register(v ...BaseInterface) {
+func Register(v ...BaseValidationInterface) {
 	CheckList = append(CheckList, v...)
 }

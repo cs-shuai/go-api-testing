@@ -29,7 +29,7 @@ type AutoTesting interface {
 	SetUp()
 	TearDown()
 	GetWaitGroup() *sync.WaitGroup
-	GoApiTesting
+	InitWaitGroup()
 }
 
 // 接口测试接口类
@@ -150,11 +150,12 @@ func ConfigInit() {
  * @Date: 2020-08-07
  */
 func AutoTestRun(testingT *testing.T, t AutoTesting) {
+
 	// 获取文件地址
 	files, _ := ioutil.ReadDir(viper.GetString("JSON_ROUTE_PATH"))
 	// fmt.Println("---------------" + fmt.Sprint(files) + "---------------")
 	t.SetUp()
-
+	t.InitWaitGroup()
 	// 读取文件
 	for _, f := range files {
 		// 获取数据
@@ -162,7 +163,6 @@ func AutoTestRun(testingT *testing.T, t AutoTesting) {
 
 		// 处理并注册到测试
 		for _, requestData := range allArr {
-			// fmt.Println("---------------" + fmt.Sprint(requestData) + "---------------")
 			t.NewTesting(requestData)
 		}
 	}

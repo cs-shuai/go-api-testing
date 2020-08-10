@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"fmt"
 	"github.com/gavv/httpexpect"
 	"jccAPITest/common"
 )
@@ -10,9 +9,14 @@ func init() {
 	Register(new(Response))
 }
 
+/**
+ * 返回匹配
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 type Response struct {
 	Key   string
-	Value string
+	Value interface{}
 }
 
 func (r *Response) GetJsonKey() string {
@@ -25,7 +29,7 @@ func (r *Response) GetRunFunc() string {
 }
 
 func (r *Response) SetJsonValue(value interface{}) {
-	r.Value = fmt.Sprint(value)
+	r.Value = value
 }
 
 func (r *Response) GetJsonValue() interface{} {

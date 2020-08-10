@@ -103,6 +103,11 @@ func HttpPost(c *check.C, t GoApiTesting) *httpexpect.Response {
 	return r
 }
 
+/**
+ * post请求
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Response {
 	// 域名
 	if Host == "" {
@@ -127,12 +132,12 @@ func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Respon
 	// fmt.Println("------------Token---" + fmt.Sprint(Token) + "---------------")
 	// fmt.Println("------------contentType---" + fmt.Sprint(contentType) + "---------------")
 	request := e.POST(uri)
-
 	// 头处理
 	for key, value := range t.GetHeader() {
 		request.WithHeader(key, value)
 	}
 
+	// fmt.Println("-----------请求参数----" + fmt.Sprint(m) + "---------------")
 	r := request.
 		WithHeader("ContentType", contentType). // 定义头信息
 		WithForm(m).
@@ -141,6 +146,11 @@ func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Respon
 	return r
 }
 
+/**
+ * 请求地址处理
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 func urlHandle(t GoApiTesting) string {
 	uri := t.UrlPath()
 	if uri == "" {
@@ -212,29 +222,26 @@ func ParamByJson(t GoApiTesting, filename string) {
  * @Author: cs_shuai
  * @Date: 2020-08-05
  */
-func paramRandomByStruct(t GoApiTesting) {
-	sv := reflect.ValueOf(t).Elem()
-	st := reflect.TypeOf(t).Elem()
-	for i := 0; i < st.NumField(); i++ {
-		// fmt.Println("--------key-------" + fmt.Sprint(st.Field(i).Tag.Get("json")) + "---------------")
-		// fmt.Println("--------value-------" + fmt.Sprint(sv.Field(i).String()) + "---------------")
-		// fmt.Println("---------------" + fmt.Sprint(st.Field(i).Type.String()) + "---------------")
-		switch st.Field(i).Type.String() {
-		case "string":
-			str := randomString(8)
-			// fmt.Println("---------------" + fmt.Sprint(str) + "---------------")
-			sv.Field(i).SetString(str)
-		case "int":
-			_int := rand.Intn(10)
-			sv.Field(i).SetInt(int64(_int))
-		case "int64":
-			_int := rand.Intn(10)
-			sv.Field(i).SetInt(int64(_int))
+func ParamRandomByMap(m *map[string]interface{}) {
+	mapTemp := *m
+	for key, value := range mapTemp {
+		if fmt.Sprint(value) == "auto" {
+			mapTemp[key] = randomString(8)
+		}
+		if fmt.Sprint(value) == "auto_int" {
+			mapTemp[key] = rand.Intn(10)
 		}
 	}
 
+	m = &mapTemp
+	// fmt.Println("---------------" + fmt.Sprint(mapTemp) + "---------------")
 }
 
+/**
+ * 参数随机
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 func paramRandom(t GoApiTesting) {
 	sv := reflect.ValueOf(t).Elem()
 	st := reflect.TypeOf(t).Elem()
@@ -259,6 +266,11 @@ func paramRandom(t GoApiTesting) {
 	}
 }
 
+/**
+ * 随机字符串
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
 func randomString(len int) string {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
