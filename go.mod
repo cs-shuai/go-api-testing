@@ -1,4 +1,4 @@
-module github.com/cs-shuai/go-api-test/
+module github.com/cs-shuai/go-api-test
 
 go 1.14
 
