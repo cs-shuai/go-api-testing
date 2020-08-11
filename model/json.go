@@ -175,6 +175,7 @@ func (jt *JsonTesting) NewTesting(requestData interface{}) common.AutoTesting {
  * @Date: 2020-08-07
  */
 func (jt *JsonTesting) TestRun(c *check.C) common.AutoTesting {
+	fmt.Println("-----TestRun----------" + fmt.Sprint(*jt) + "---------------")
 	jt.C = c
 	jt.Request()
 
