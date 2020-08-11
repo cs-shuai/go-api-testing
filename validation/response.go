@@ -1,8 +1,8 @@
 package validation
 
 import (
+	"github.com/cs-shuai/go-api-test/common"
 	"github.com/gavv/httpexpect"
-	"jccAPITest/common"
 )
 
 const response = "成功"

@@ -2,11 +2,11 @@ package model
 
 import (
 	"fmt"
+	"github.com/cs-shuai/go-api-test/common"
+	"github.com/cs-shuai/go-api-test/validation"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
-	"jccAPITest/common"
-	"jccAPITest/validation"
 	"runtime"
 	"strings"
 )

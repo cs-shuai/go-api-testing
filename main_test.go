@@ -1,8 +1,8 @@
 package go_api_test
 
 import (
-	"jccAPITest/common"
-	"jccAPITest/model"
+	"github.com/cs-shuai/go-api-test/common"
+	"github.com/cs-shuai/go-api-test/model"
 	"testing"
 )
 

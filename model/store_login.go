@@ -1,8 +1,8 @@
 package model
 
 import (
+	"github.com/cs-shuai/go-api-test/common"
 	"gopkg.in/check.v1"
-	"jccAPITest/common"
 )
 
 type StoreLogin struct {

@@ -1,10 +1,10 @@
 package model
 
 import (
+	"github.com/cs-shuai/go-api-test/common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
-	"jccAPITest/common"
 	"sync"
 )
 
