@@ -38,3 +38,10 @@ func (l *Login) TestLoginSuccess(c *check.C) {
 	// fmt.Println("---------------" + fmt.Sprint(ob) + "---------------")
 	ob.Value("token").NotNull()
 }
+
+func (l *Login) TearDownTest(_ *check.C) {
+	_, err := l.Db.Exec("UPDATE user_token SET merchid=1  WHERE id=1")
+	if err != nil {
+		panic(err)
+	}
+}

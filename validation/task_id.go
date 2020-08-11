@@ -24,10 +24,6 @@ func (t *TaskId) GetJsonKey() string {
 	return t.Key
 }
 
-func (t *TaskId) GetRunFunc() string {
-	return TearDownTest
-}
-
 func (t *TaskId) SetJsonValue(value interface{}) {
 	t.Value = value
 }
@@ -36,6 +32,8 @@ func (t *TaskId) GetJsonValue() interface{} {
 	return t.Value
 }
 
-func (t *TaskId) Run(res *httpexpect.Response, params *map[string]interface{}) {
+func (t *TaskId) SetUpRun(params *map[string]interface{}) {
 	fmt.Println("执行禅道号", t.Value)
 }
+
+func (t *TaskId) TearDownRun(res *httpexpect.Response, params *map[string]interface{}) {}

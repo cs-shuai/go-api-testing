@@ -325,13 +325,6 @@ func GetParamsByJsonFile(fileName, path string) (result []interface{}) {
 	jf := checkFileTypeToStruct(fileName, path)
 
 	filename := RootPath + path + jf.FileName
-	// fileObj, err := os.Open(filename)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer fileObj.Close()
-	// content, err := ioutil.ReadAll(fileObj)
-	fmt.Println("---------------" + fmt.Sprint(filename) + "---------------")
 	content := ReadJson(filename)
 	// fmt.Println(string(content))
 	err := json.Unmarshal([]byte(content), &result)
@@ -369,4 +362,19 @@ func ReadJson(filePath string) (result string) {
 		}
 	}
 	return result
+}
+
+/**
+ * 获取全部Json
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
+func ReadAllJson(filename string) string {
+	fileObj, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer fileObj.Close()
+	content, err := ioutil.ReadAll(fileObj)
+	return string(content)
 }

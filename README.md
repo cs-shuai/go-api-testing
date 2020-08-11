@@ -6,6 +6,31 @@
 go test
 ```
 
+## JSON文件规则
+* json文件中为数组对象
+* 请求参数可在对应文件中编写 同样为数组格式
+* 请求参数(request_data) 中可随机生成参数 
+    * auto 随机字符串
+    * auto_int 随机数组
+```
+[
+  {
+    "request_url": "manager/pm_user/user_login",
+    "request_data_url": "login.json",
+    "request_data" :[],
+    "type": "Post",
+    "addr": "PmToken"
+  },
+  {
+    "request_url": "manager/pm_member/select_members",
+    "request_data_url": "select_member.json",
+    "type": "Get",
+    "addr": "PmToken"
+  }
+]
+
+```
+
 ## 编写测试用例
 * <a href="#结构体创建">结构体 </a>
 * <a href="#Json创建">json </a>
@@ -133,7 +158,7 @@ func (l *Login) TestLoginSuccess(c *check.C) {
 ```
 
 ## 自定义验证标签
-> 指定的json键值 执行 对应的回调方法
+> 指定的json键值 执行 对应时机的对应回调方法
 > 只需实现 BaseValidationInterface
 ```
 package validation
@@ -161,11 +186,6 @@ func (r *Response) GetJsonKey() string {
 	r.Key = "response"
 	return r.Key
 }
-
-func (r *Response) GetRunFunc() string {
-	return TearDownTest
-}
-
 func (r *Response) SetJsonValue(value interface{}) {
 	r.Value = value
 }
@@ -174,7 +194,7 @@ func (r *Response) GetJsonValue() interface{} {
 	return r.Value
 }
 
-func (r *Response) Run(res *httpexpect.Response, params *map[string]interface{}) {
+func (r *Response) TearDownRun(res *httpexpect.Response, params *map[string]interface{}) {
 	responseKey := common.ResponseKey
 	response := common.Response
 	equalValue := "成功"
@@ -186,6 +206,23 @@ func (r *Response) Run(res *httpexpect.Response, params *map[string]interface{})
 	res.JSON().Object().Value(responseKey).Equal(equalValue)
 }
 
+func (r *Response) SetUpRun(params *map[string]interface{}) {
+
+}
+```
+
+## 数据库操作
+> 通过设置配置文件 `SQLCONN` 连接数据库
+> 在 BaseJccAPITesting 结构体中存在 DB 属性 通过方法初始化
+```
+func (t *BaseJccAPITesting) Initialization() {
+	db, err := sql.Open("mysql", viper.GetString("SQLCONN"))
+	if err != nil {
+		panic(err)
+	}
+
+	t.Db = db
+}
 ```
 
 ## 测试UML图

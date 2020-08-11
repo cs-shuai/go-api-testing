@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
@@ -8,7 +9,6 @@ import (
 	"jccAPITest/validation"
 	"runtime"
 	"strings"
-	"sync"
 )
 
 const (
@@ -17,7 +17,6 @@ const (
 )
 
 var isLogin bool
-var jsonTestingWait *sync.WaitGroup
 
 /**
  * 自动测试
@@ -61,7 +60,6 @@ func (jt *JsonTesting) SetUpTest(c *check.C) {
 	jt.Validation()
 }
 func (jt *JsonTesting) TearDownSuite(c *check.C) {
-	jt.Validation()
 }
 func (jt *JsonTesting) SetUpSuite(c *check.C) {
 	if !isLogin {
@@ -84,15 +82,23 @@ func (jt *JsonTesting) SetUpSuite(c *check.C) {
 		// jt.AddHeader("MemberToken", "a2ae8a7e-b705-43ea-bd38-c91721aab743")
 		isLogin = true
 	}
-	jt.Validation()
 }
 func (jt *JsonTesting) TearDownTest(c *check.C) {
 	jt.Validation()
-	jt.GetWaitGroup().Done()
 }
 
-func (jt *JsonTesting) SetUp()    {}
-func (jt *JsonTesting) TearDown() {}
+func (jt *JsonTesting) SetUp() {
+	fmt.Println("-----------SetUp----" + fmt.Sprint() + "---------------")
+}
+func (jt *JsonTesting) TearDown() {
+	fmt.Println("-----------TearDown----" + fmt.Sprint() + "---------------")
+}
+
+/**
+ * 获取路由地址
+ * @Author: cs_shuai
+ * @Date: 2020-08-11
+ */
 func (jt *JsonTesting) GetRouteDir() string {
 	return viper.GetString("JSON_ROUTE_PATH")
 }
@@ -139,6 +145,9 @@ func (jt *JsonTesting) GetParams() map[string]interface{} {
  * @Date: 2020-08-07
  */
 func (jt *JsonTesting) NewTesting(requestData interface{}) common.AutoTesting {
+	// 初始化
+	jt.Initialization()
+
 	newJsonTesting := new(JsonTesting)
 	if err := mapstructure.Decode(requestData, newJsonTesting); err != nil {
 		panic(err)
@@ -152,7 +161,6 @@ func (jt *JsonTesting) NewTesting(requestData interface{}) common.AutoTesting {
 
 	// 注册到测试中
 	for _, test := range newJsonTesting.RequestDataList {
-		jt.GetWaitGroup().Add(1)
 		jTemp := *newJsonTesting
 		jTemp.RequestData = test.(map[string]interface{})
 		check.Suite(&jTemp)
@@ -211,24 +219,6 @@ func (jt *JsonTesting) ResponseCheck() common.AutoTesting {
 }
 
 /**
- * 获取WaitGroup
- * @Author: cs_shuai
- * @Date: 2020-08-10
- */
-func (jt *JsonTesting) GetWaitGroup() *sync.WaitGroup {
-	return jsonTestingWait
-}
-
-/**
- * 初始化WaitGroup
- * @Author: cs_shuai
- * @Date: 2020-08-10
- */
-func (jt *JsonTesting) InitWaitGroup() {
-	jsonTestingWait = new(sync.WaitGroup)
-}
-
-/**
  * 调取验证类
  * @Author: cs_shuai
  * @Date: 2020-08-10
@@ -236,12 +226,17 @@ func (jt *JsonTesting) InitWaitGroup() {
 func (jt *JsonTesting) Validation() {
 	funcName := getFuncName(2)
 	for _, v := range validation.CheckList {
-		if v.GetRunFunc() == funcName {
+		switch funcName {
+		case "SetUpTest":
 			if value, ok := jt.RequestData[v.GetJsonKey()]; ok {
 				v.SetJsonValue(value)
-				v.Run(jt.Response, &jt.RequestData)
+				v.SetUpRun(&jt.RequestData)
 			}
-			// fmt.Println("---------------" + fmt.Sprint(jt.RequestData) + "---------------")
+		case "TearDownTest":
+			if value, ok := jt.RequestData[v.GetJsonKey()]; ok {
+				v.SetJsonValue(value)
+				v.TearDownRun(jt.Response, &jt.RequestData)
+			}
 		}
 	}
 }

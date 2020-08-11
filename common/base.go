@@ -1,14 +1,15 @@
 package common
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/gavv/httpexpect"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
 	"io/ioutil"
 	"os"
 	"reflect"
-	"sync"
 	"testing"
 )
 
@@ -28,8 +29,6 @@ type AutoTesting interface {
 	Request() AutoTesting
 	SetUp()
 	TearDown()
-	GetWaitGroup() *sync.WaitGroup
-	InitWaitGroup()
 	GetRouteDir() string
 }
 
@@ -54,6 +53,7 @@ type GoApiTesting interface {
 type BaseJccAPITesting struct {
 	Token    string               `json:"token"`
 	Response *httpexpect.Response `json:"-"`
+	Db       *sql.DB
 }
 
 type jsonFile struct {
@@ -63,7 +63,14 @@ type jsonFile struct {
 	FileName   string
 }
 
-func (t *BaseJccAPITesting) Initialization() {}
+func (t *BaseJccAPITesting) Initialization() {
+	db, err := sql.Open("mysql", viper.GetString("SQLCONN"))
+	if err != nil {
+		panic(err)
+	}
+
+	t.Db = db
+}
 
 func (t *BaseJccAPITesting) SetUpSuite(_ *check.C) {}
 
@@ -155,9 +162,7 @@ func AutoTestRun(testingT *testing.T, ts ...AutoTesting) {
 	for _, t := range ts {
 		// 获取文件地址
 		files, _ := ioutil.ReadDir(t.GetRouteDir())
-		// fmt.Println("---------------" + fmt.Sprint(files) + "---------------")
 		t.SetUp()
-		t.InitWaitGroup()
 		// 读取文件
 		for _, f := range files {
 			// 获取数据
@@ -165,12 +170,13 @@ func AutoTestRun(testingT *testing.T, ts ...AutoTesting) {
 
 			// 处理并注册到测试
 			for _, requestData := range allArr {
+				// fmt.Println("--------requestData-------" + fmt.Sprint(requestData) + "---------------")
 				t.NewTesting(requestData)
 			}
 		}
 
 		check.TestingT(testingT)
-		t.GetWaitGroup().Wait()
+
 		t.TearDown()
 	}
 }

@@ -4,13 +4,6 @@ import "github.com/gavv/httpexpect"
 
 var CheckList []BaseValidationInterface
 
-const (
-	SetUpSuite    = "SetUpSuite"
-	TearDownSuite = "TearDownSuite"
-	SetUpTest     = "SetUpTest"
-	TearDownTest  = "TearDownTest"
-)
-
 /**
  * 验证接口
  * @Author: cs_shuai
@@ -18,10 +11,10 @@ const (
  */
 type BaseValidationInterface interface {
 	GetJsonKey() string
-	GetRunFunc() string
 	SetJsonValue(interface{})
 	GetJsonValue() interface{}
-	Run(res *httpexpect.Response, params *map[string]interface{})
+	SetUpRun(params *map[string]interface{})
+	TearDownRun(res *httpexpect.Response, params *map[string]interface{})
 }
 
 /**
