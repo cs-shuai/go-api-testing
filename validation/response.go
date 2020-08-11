@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/cs-shuai/go-api-test/common"
+	"github.com/cs-shuai/go-api-testing/common"
 	"github.com/gavv/httpexpect"
 )
 

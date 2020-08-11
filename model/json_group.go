@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/cs-shuai/go-api-test/common"
+	"github.com/cs-shuai/go-api-testing/common"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"

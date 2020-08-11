@@ -2,8 +2,8 @@ package model
 
 import (
 	"fmt"
-	"github.com/cs-shuai/go-api-test/common"
-	"github.com/cs-shuai/go-api-test/validation"
+	"github.com/cs-shuai/go-api-testing/common"
+	"github.com/cs-shuai/go-api-testing/validation"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/check.v1"

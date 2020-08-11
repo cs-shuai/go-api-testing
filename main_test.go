@@ -1,8 +1,8 @@
-package go_api_test
+package go_api_testing_test
 
 import (
-	"github.com/cs-shuai/go-api-test/common"
-	"github.com/cs-shuai/go-api-test/model"
+	"github.com/cs-shuai/go-api-testing/common"
+	"github.com/cs-shuai/go-api-testing/model"
 	"testing"
 )
 

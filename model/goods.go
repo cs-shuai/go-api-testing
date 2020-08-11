@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/cs-shuai/go-api-test/common"
+	"github.com/cs-shuai/go-api-testing/common"
 	"gopkg.in/check.v1"
 )
 
