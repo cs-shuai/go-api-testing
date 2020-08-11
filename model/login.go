@@ -12,7 +12,7 @@ type Login struct {
 }
 
 func init() {
-	common.RegisterCheck(new(Login))
+	// common.RegisterCheck(new(Login))
 }
 
 func (l *Login) UrlPath() string {
