@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/cs-shuai/go-api-testing/json_key"
 	"github.com/gavv/httpexpect"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
@@ -17,14 +18,9 @@ var Host string
 var TestList []GoApiTesting
 var RootPath string
 
-const (
-	Response    = "response"
-	ResponseKey = "msg"
-)
-
 // 自动测试接口
 type AutoTesting interface {
-	NewTesting(interface{}) AutoTesting
+	NewTesting([]interface{}) AutoTesting
 	TestRun(*check.C) AutoTesting
 	Request() AutoTesting
 	SetUp()
@@ -42,11 +38,12 @@ type GoApiTesting interface {
 	UrlPath() string
 	SetResponse(*httpexpect.Response)
 	HandleParam(GoApiTesting) map[string]interface{}
+	HandleHeader(GoApiTesting) map[string]string
 	HandleUrlCode(GoApiTesting) map[string]interface{}
-	AddHeader(key, value string)
-	AddParams(key string, value interface{})
-	GetHeader() map[string]string
-	GetParams() map[string]interface{}
+	// AddHeader(key, value string)
+	// AddParams(key string, value interface{})
+	// GetHeader() map[string]string
+	// GetParams() map[string]interface{}
 }
 
 // 测试基础类
@@ -54,6 +51,7 @@ type BaseJccAPITesting struct {
 	Token    string               `json:"token"`
 	Response *httpexpect.Response `json:"-"`
 	Db       *sql.DB
+	J        *json_key.J
 }
 
 type jsonFile struct {
@@ -61,6 +59,7 @@ type jsonFile struct {
 	FilePrefix string
 	FileSuffix string
 	FileName   string
+	File       os.FileInfo
 }
 
 func (t *BaseJccAPITesting) Initialization() {
@@ -112,20 +111,87 @@ func (t *BaseJccAPITesting) HandleParam(gat GoApiTesting) map[string]interface{}
 
 	return m
 }
-func (t *BaseJccAPITesting) AddHeader(key, value string) {
-	headerGlobal[key] = value
+
+func (t *BaseJccAPITesting) HandleHeader(gat GoApiTesting) map[string]string {
+	var m = make(map[string]string)
+	j, err := json.Marshal(gat)
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(j, &m)
+	if err != nil {
+		panic(err)
+	}
+
+	return m
 }
 
-func (t *BaseJccAPITesting) AddParams(key string, value interface{}) {
-	paramsGlobal[key] = value
+// /**
+//  * 添加头数据
+//  * @Author: cs_shuai
+//  * @Date: 2020-08-10
+//  */
+// func (t *BaseJccAPITesting) AddHeader( key string, value string) {
+// 	t.J.Header[key] = value
+// }
+//
+// /**
+//  * 添加参数数据
+//  * @Author: cs_shuai
+//  * @Date: 2020-08-10
+//  */
+// func (t *BaseJccAPITesting) AddParams(key string, value interface{}) {
+// 	t.J.Params[key] = value
+// }
+//
+// /**
+//  * 获取头数据
+//  * @Author: cs_shuai
+//  * @Date: 2020-08-10
+//  */
+// func (t *BaseJccAPITesting) GetHeader() map[string]string {
+// 	return t.J.Header
+// }
+//
+// /**
+//  * 获取参数数据
+//  * @Author: cs_shuai
+//  * @Date: 2020-08-10
+//  */
+// func (t *BaseJccAPITesting) GetParams() map[string]interface{} {
+// 	return t.J.Params
+// }
+
+/**
+ * 测试输出
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+type loggerReporter struct {
+	C          *check.C
+	ParamsJson string
 }
 
-func (t *BaseJccAPITesting) GetHeader() map[string]string {
-	return headerGlobal
+/**
+ * 初始化
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+func NewLoggerReporter(c *check.C, m map[string]interface{}) *loggerReporter {
+	lc := new(loggerReporter)
+	lc.C = c
+	b, _ := json.Marshal(m)
+	lc.ParamsJson = string(b)
+	return lc
 }
 
-func (t *BaseJccAPITesting) GetParams() map[string]interface{} {
-	return paramsGlobal
+func (l *loggerReporter) Logf(fmt string, args ...interface{}) {
+	l.C.Logf(fmt, args...)
+}
+
+func (l *loggerReporter) Errorf(message string, args ...interface{}) {
+	l.C.Logf("请求参数: %s", l.ParamsJson)
+	l.C.Errorf(message, args...)
 }
 
 /**
@@ -146,10 +212,32 @@ func ConfigInit() {
 	}
 
 	// 请求地址
-	Host = viper.GetString("Host")
+	Host = viper.GetString("HOST")
 	// 根目录
 	RootPath, _ = os.Getwd()
 	RootPath += "/"
+}
+
+/**
+ * 获取全部文件包括子目录下的文件
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+func getAllFile(path string) (fileList []*jsonFile) {
+	// fmt.Println("---------------" + fmt.Sprint(path) + "---------------")
+	files, _ := ioutil.ReadDir(path)
+	for _, f := range files {
+		var resList []*jsonFile
+		if f.IsDir() {
+			resList = getAllFile(path + "/" + f.Name() + "/")
+		} else {
+			jf := checkFileTypeToStruct(f.Name(), path)
+			resList = append(resList, jf)
+		}
+		fileList = append(fileList, resList...)
+	}
+
+	return
 }
 
 /**
@@ -158,23 +246,19 @@ func ConfigInit() {
  * @Date: 2020-08-07
  */
 func AutoTestRun(testingT *testing.T, ts ...AutoTesting) {
-
 	for _, t := range ts {
 		// 获取文件地址
-		files, _ := ioutil.ReadDir(t.GetRouteDir())
+		files := getAllFile(t.GetRouteDir())
 		t.SetUp()
 		// 读取文件
 		for _, f := range files {
-			// 获取数据
-			allArr := GetParamsByJsonFile(f.Name(), t.GetRouteDir())
-
-			// 处理并注册到测试
-			for _, requestData := range allArr {
-				// fmt.Println("--------requestData-------" + fmt.Sprint(requestData) + "---------------")
-				t.NewTesting(requestData)
-			}
+			// 获取文件数据
+			allArr := GetParamsByJsonFileStruct(f)
+			// 初始化测试
+			t.NewTesting(allArr)
 		}
 
+		// 执行测试
 		check.TestingT(testingT)
 
 		t.TearDown()

@@ -1,8 +1,4 @@
-package validation
-
-import (
-	"github.com/gavv/httpexpect"
-)
+package json_key
 
 /**
  * 返回匹配
@@ -27,8 +23,8 @@ func (s *Sql) GetJsonValue() interface{} {
 	return s.Value
 }
 
-func (s *Sql) SetUpRun(params *map[string]interface{}) {
+func (s *Sql) SetUpRun(params *J) {
 
 }
 
-func (s *Sql) TearDownRun(res *httpexpect.Response, params *map[string]interface{}) {}
+func (s *Sql) TearDownRun(params *J) {}

@@ -6,6 +6,44 @@
 go test
 ```
 
+## 创建新项目
+1. 获取测试框架包
+```
+go get github.com/cs-shuai/go-api-testing
+```
+
+2. 创建 main_test文件 选择注册对象
+```
+package go_api_testing_test
+
+import (
+	"github.com/cs-shuai/go-api-testing/common"
+	"github.com/cs-shuai/go-api-testing/model"
+	"testing"
+)
+
+func Test(t *testing.T) {
+    // 选择注册测试对象
+	common.AutoTestRun(t, new(model.JsonTesting), new(model.JsonGroupTesting))
+}
+
+```
+3. 创建配置文件 conf/ config.toml
+```
+Host = "https://XXXXXXXXXXX/"
+TOKEN_KEY = "XXXXXX"
+JSON_PATH = "json/"
+JSON_ROUTE_PATH = "route/"
+JSON_GROUP_ROUTE_PATH = "group_route/"
+SQLCONN = "user:pass@tcp(127.0.0.1:3306)/database"
+```
+4. 创建对应的json目录和json文件
+5. 项目根目录 执行
+```
+go test
+```
+
+
 ## JSON文件规则
 * json文件中为数组对象
 * 请求参数可在对应文件中编写 同样为数组格式
@@ -123,35 +161,71 @@ func (l *Login) TestLoginSuccess(c *check.C) {
 ```
 [
   {
-    "request_url": "manager/pm_user/user_login",  // 请求地址
-    "request_data_url": "login.json",             // 请求数据地址 (目录在配置中配置)
-    "type": "Post",                               // 请求方式 
-    "addr": "PmToken",                            // 权限验证 
-    "after": {
-        "token":"token",
-        "goods_id": "data.goods_id",
-    }                                             // 从返回值中向后传递的值 
-    "request_data": [{
-                "username": "丛力强",
-                "pwd": "123",
-                "response" : "操作成功"
-              },
-              {
-                "username": "丛力强1",
-                "pwd": "1232",
-                "response" : "用户不存在"
-              }
-            ]},                                     // 请求参数  可写在对应文件中  2数据会合并
+    "request_url": "manager/pm_user/user_login",
+    "request_data": [
+      {
+        "username": "丛力强",
+        "pwd": "123",
+        "response" : "操作成功"
+      }
+    ],
+    "type": "Post",
+    "addr": "PmToken"
+  },
   {
-    "request_url": "manager/pm_member/select_members",
-    "request_data_url": "select_member.json",
+    "request_url": "manager/pm_member/condition_list",
+    "request_data": [
+      {
+        "response" : "操作成功",
+        "before": [{
+          "url" : "manager/pm_user/user_login",
+          "before_key" : "token",
+          "key" : "PmToken",
+          "is_header" : true
+        }]
+      }
+    ],
     "type": "Get",
-    "addr": "PmToken",
-    "request_data": [{
-      "username": "before",
-      "pwd": "123",
-      "response" : "操作成功"
-    }},         
+    "addr": "PmToken"
+  },
+  {
+    "request_url": "manager/pm_member/pm_add_member_tag",
+    "request_data": [
+      {
+        "response" : "操作成功",
+        "merch_id": "undefined",
+        "tag": "auto",
+        "description": "",
+        "member_ids": "",
+        "recommend": 0,
+        "and_or": 0,
+        "tag_type": 1,
+        "condition_options_str": [
+          {
+            "condition_id": "1",
+            "condition_value": []
+          },
+          {
+            "condition_id": "5",
+            "condition_value": [
+              9
+            ]
+          }
+        ],
+        "before": [{
+          "url" : "manager/pm_user/user_login",
+          "before_key" : "token",
+          "key" : "PmToken",
+          "is_header" : true
+        }, {
+            "url" : "manager/pm_member/condition_list",
+            "before_key" : "data.random.id",
+            "key" : "tag_type"
+          }]
+      }
+    ],
+    "type": "Post",
+    "addr": "PmToken"
   }
 ]
 
@@ -159,17 +233,15 @@ func (l *Login) TestLoginSuccess(c *check.C) {
 
 ## 自定义验证标签
 > 指定的json键值 执行 对应时机的对应回调方法
-> 只需实现 BaseValidationInterface
+> 只需实现 BaseJsonKeyExpandInterface
 ```
-package validation
+package json_key
 
-import (
-	"github.com/gavv/httpexpect"
-	"jccAPITest/common"
-)
+import "github.com/spf13/viper"
 
+var ResponseMessage string
 func init() {
-	Register(new(Response))
+	RegisterJsonKey(new(Response))
 }
 
 /**
@@ -194,20 +266,57 @@ func (r *Response) GetJsonValue() interface{} {
 	return r.Value
 }
 
-func (r *Response) TearDownRun(res *httpexpect.Response, params *map[string]interface{}) {
-	responseKey := common.ResponseKey
-	response := common.Response
-	equalValue := "成功"
-	var tempMap = *params
-	if value, ok := tempMap[response]; ok {
-		equalValue = value.(string)
+func (r *Response) TearDownRun(params *J) {
+	if ResponseMessage == "" {
+		ResponseMessage = viper.GetString("RESPONSE_MESSAGE")
 	}
-	params = &tempMap
-	res.JSON().Object().Value(responseKey).Equal(equalValue)
+	params.Response.JSON().Object().Value(ResponseMessage).Equal(r.Value)
 }
 
-func (r *Response) SetUpRun(params *map[string]interface{}) {
+func (r *Response) SetUpRun(params *J) {
 
+}
+
+```
+
+## Json值的拓展
+```
+package json_value
+
+import (
+	"math/rand"
+	"time"
+)
+
+func init() {
+	RegisterJsonValue(new(Auto))
+}
+type Auto struct {
+}
+
+func (a *Auto) GetJsonValue() string {
+	return "auto"
+}
+
+func (a *Auto) Run() interface{} {
+	return 	randomString(8)
+}
+
+
+/**
+ * 随机字符串
+ * @Author: cs_shuai
+ * @Date: 2020-08-10
+ */
+func randomString(len int) string {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	bytes := make([]byte, len)
+	for i := 0; i < len; i++ {
+		b := r.Intn(26) + 65
+		bytes[i] = byte(b)
+	}
+	return string(bytes)
 }
 ```
 

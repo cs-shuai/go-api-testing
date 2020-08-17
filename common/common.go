@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/cs-shuai/go-api-testing/json_key"
+	"github.com/cs-shuai/go-api-testing/json_value"
 	"github.com/gavv/httpexpect"
+	"github.com/spf13/viper"
 	"gopkg.in/check.v1"
 	"io"
 	"io/ioutil"
@@ -17,27 +20,8 @@ import (
 	"time"
 )
 
-var headerGlobal = make(map[string]string)
-var paramsGlobal = make(map[string]interface{})
-
 func init() {
 	ConfigInit()
-}
-
-func AddHeaderGlobal(key, value string) {
-	headerGlobal[key] = value
-}
-
-func AddParamsGlobal(key string, value interface{}) {
-	paramsGlobal[key] = value
-}
-
-func GetHeaderGlobal() map[string]string {
-	return headerGlobal
-}
-
-func GetParamsGlobal() map[string]interface{} {
-	return paramsGlobal
 }
 
 // 注册校验
@@ -56,17 +40,12 @@ func RegisterCheck(tests ...GoApiTesting) {
  */
 func HttpGet(c *check.C, t GoApiTesting) *httpexpect.Response {
 	t.Initialization()
-	e := httpexpect.New(c, Host)
 	uri := urlHandle(t)
 
 	m := t.HandleUrlCode(t)
 
-	// 与全局参数合并
-	for k, v := range t.GetParams() {
-		if _, ok := m[k]; !ok {
-			m[k] = v
-		}
-	}
+	lc := NewLoggerReporter(c, m)
+	e := httpexpect.New(lc, Host)
 
 	// fmt.Println("----------t.UrlPath() -----" + fmt.Sprint(uri) + "---------------")
 	// fmt.Println("----------t.Token() -----" + fmt.Sprint(Token) + "---------------")
@@ -79,7 +58,9 @@ func HttpGet(c *check.C, t GoApiTesting) *httpexpect.Response {
 	}
 
 	// 头处理
-	for key, value := range t.GetHeader() {
+	for key, value := range t.HandleHeader(t) {
+		// fmt.Println("------------WithHeader---" + fmt.Sprint(key) + "---------------")
+		// fmt.Println("------------WithHeader---" + fmt.Sprint(value) + "---------------")
 		request.WithHeader(key, value)
 	}
 	r := request.Expect().
@@ -115,27 +96,26 @@ func httpPost(c *check.C, t GoApiTesting, contentType string) *httpexpect.Respon
 	if Host == "" {
 		panic("host is null")
 	}
-	e := httpexpect.New(c, Host)
 
 	// 请求地址处理
 	uri := urlHandle(t)
 	// 请求参数处理
 	m := t.HandleParam(t)
 
-	// 与全局参数合并
-	for k, v := range t.GetParams() {
-		if _, ok := m[k]; !ok {
-			m[k] = v
-		}
-	}
+	lc := NewLoggerReporter(c, m)
 
+	e := httpexpect.New(lc, Host)
 	// fmt.Println("-----------uri----" + fmt.Sprint(uri) + "---------------")
 	// fmt.Println("------------mmm---" + fmt.Sprint(m) + "---------------")
 	// fmt.Println("------------Token---" + fmt.Sprint(Token) + "---------------")
 	// fmt.Println("------------contentType---" + fmt.Sprint(contentType) + "---------------")
 	request := e.POST(uri)
+
 	// 头处理
-	for key, value := range t.GetHeader() {
+	for key, value := range t.HandleHeader(t) {
+		// fmt.Println("------------WithHeader---" + fmt.Sprint(key) + "---------------")
+		// fmt.Println("------------WithHeader---" + fmt.Sprint(value) + "---------------")
+
 		request.WithHeader(key, value)
 	}
 
@@ -202,6 +182,69 @@ func structToUrlCode(t GoApiTesting) map[string]interface{} {
 }
 
 /**
+ * 全部随机
+ * @Author: cs_shuai
+ * @Date: 2020-08-05
+ */
+func ParamRandomByMap(m *map[string]interface{}) {
+	mapTemp := *m
+	res := printInterface(mapTemp, 0)
+	mapTemp = res.(map[string]interface{})
+	m = &mapTemp
+}
+
+/**
+ * 格式化数据
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+func printInterface(i interface{}, skip int) interface{} {
+	var r interface{}
+	switch i.(type) {
+	case []interface{}:
+		var temp = make([]interface{}, 0)
+		for _, v := range i.([]interface{}) {
+			nv := printInterface(v, skip+1)
+			temp = append(temp, nv)
+		}
+		if skip == 1 {
+			strJons, _ := json.Marshal(temp)
+			r = string(strJons)
+		} else {
+			r = temp
+		}
+
+	case map[string]interface{}:
+		for k, v := range i.(map[string]interface{}) {
+			temp := printInterface(v, skip+1)
+			i.(map[string]interface{})[k] = temp
+		}
+		if skip == 1 {
+			strJons, _ := json.Marshal(i)
+			r = string(strJons)
+		} else {
+			r = i
+		}
+	default:
+		if ev, ok := json_value.JsonValueExpand[fmt.Sprint(i)]; ok {
+			if skip == 1 {
+				r = fmt.Sprint(ev.Run())
+			} else {
+				r = ev.Run()
+			}
+		} else {
+			if skip == 1 {
+				r = fmt.Sprint(i)
+			} else {
+				r = i
+			}
+		}
+	}
+
+	return r
+}
+
+/**
  * 从json文件中获取参数
  * @Author: cs_shuai
  * @Date: 2020-08-05
@@ -217,26 +260,6 @@ func ParamByJson(t GoApiTesting, filename string) {
 	err = json.Unmarshal(content, t)
 	// 随机
 	paramRandom(t)
-}
-
-/**
- * 全部随机
- * @Author: cs_shuai
- * @Date: 2020-08-05
- */
-func ParamRandomByMap(m *map[string]interface{}) {
-	mapTemp := *m
-	for key, value := range mapTemp {
-		if fmt.Sprint(value) == "auto" {
-			mapTemp[key] = randomString(8)
-		}
-		if fmt.Sprint(value) == "auto_int" {
-			mapTemp[key] = rand.Intn(10)
-		}
-	}
-
-	m = &mapTemp
-	// fmt.Println("---------------" + fmt.Sprint(mapTemp) + "---------------")
 }
 
 /**
@@ -309,9 +332,6 @@ func checkFileTypeToStruct(fileName, path string) *jsonFile {
 	jf.FileName = fileName
 	jf.FilePrefix = filePrefix
 	jf.FileSuffix = fileSuffix
-	if fileSuffix != ".json" {
-		panic("文件类型异常: " + fileName)
-	}
 
 	return jf
 }
@@ -325,6 +345,23 @@ func GetParamsByJsonFile(fileName, path string) (result []interface{}) {
 	jf := checkFileTypeToStruct(fileName, path)
 
 	filename := RootPath + path + jf.FileName
+	content := ReadJson(filename)
+	// fmt.Println(string(content))
+	err := json.Unmarshal([]byte(content), &result)
+	if err != nil {
+		panic(err)
+	}
+
+	return result
+}
+
+/**
+ * 获取文件数据
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+func GetParamsByJsonFileStruct(jf *jsonFile) (result []interface{}) {
+	filename := jf.Path
 	content := ReadJson(filename)
 	// fmt.Println(string(content))
 	err := json.Unmarshal([]byte(content), &result)
@@ -377,4 +414,20 @@ func ReadAllJson(filename string) string {
 	defer fileObj.Close()
 	content, err := ioutil.ReadAll(fileObj)
 	return string(content)
+}
+
+/**
+ * 设置Token
+ * @Author: cs_shuai
+ * @Date: 2020-08-15
+ */
+func SetToken(j *json_key.J) {
+	tokenArr := viper.Get("token")
+	headTokenArr := viper.GetStringMapString("head_token")
+	for k, v := range tokenArr.(map[string]interface{}) {
+		j.Params[k] = v
+	}
+	for k, v := range headTokenArr {
+		j.Header[k] = v
+	}
 }

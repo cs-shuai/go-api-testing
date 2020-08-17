@@ -1,6 +1,12 @@
-Host = "https://cs.jicanchu.net/"
-TOKEN_KEY = "PmToken"
+HOST = "https://cs.jicanchu.net/"
 JSON_PATH = "json/"
 JSON_ROUTE_PATH = "route/"
 JSON_GROUP_ROUTE_PATH = "group_route/"
 SQLCONN = "jcc:jcc@tcp(172.16.0.203:3306)/city_debug"
+RESPONSE_MESSAGE = "msg"
+
+[HEAD_TOKEN]
+ PmToken = "2a320fad-a8f4-4f19-8e86-46d8308329de"
+ Token = "4ac8d662-3868-449a-a1b5-4f29d006f5a9"
+[TOKEN]
+# token = "4ac8d662-3868-449a-a1b5-4f29d006f5a9"

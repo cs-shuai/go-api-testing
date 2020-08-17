@@ -1,0 +1,69 @@
+[
+  {
+    "request_url": "manager/pm_user/user_login",
+    "request_data": [
+      {
+        "username": "丛力强",
+        "pwd": "123",
+        "response" : "操作成功"
+      }
+    ],
+    "type": "Post",
+    "addr": "PmToken"
+  },
+  {
+    "request_url": "manager/pm_member/condition_list",
+    "request_data": [
+      {
+        "response" : "操作成功",
+        "before": [{
+          "url" : "manager/pm_user/user_login",
+          "before_key" : "token",
+          "key" : "PmToken",
+          "is_header" : true
+        }]
+      }
+    ],
+    "type": "Get",
+    "addr": "PmToken"
+  },
+  {
+    "request_url": "manager/pm_member/pm_add_member_tag",
+    "request_data": [
+      {
+        "response" : "操作成功",
+        "merch_id": "undefined",
+        "tag": "auto",
+        "description": "",
+        "member_ids": "",
+        "recommend": 0,
+        "and_or": 0,
+        "tag_type": 1,
+        "condition_options_str": [
+          {
+            "condition_id": "1",
+            "condition_value": []
+          },
+          {
+            "condition_id": "5",
+            "condition_value": [
+              9
+            ]
+          }
+        ],
+        "before": [{
+          "url" : "manager/pm_user/user_login",
+          "before_key" : "token",
+          "key" : "PmToken",
+          "is_header" : true
+        }, {
+            "url" : "manager/pm_member/condition_list",
+            "before_key" : "data.random.id",
+            "key" : "tag_type"
+          }]
+      }
+    ],
+    "type": "Post",
+    "addr": "PmToken"
+  }
+]

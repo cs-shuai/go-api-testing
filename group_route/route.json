@@ -4,10 +4,14 @@
     "request_data_url": "login.json",
     "request_data": [
       {
-        "username": "丛力强3",
+        "username": "丛力强",
         "pwd": "123",
-        "response" : "操作成功",
-        "after": {"token" : "token"}
+        "response" : "操作成功"
+      },
+      {
+        "username": "auto",
+        "pwd": "123",
+        "response" : "用户不存在"
       }
     ],
     "type": "Post",
@@ -29,7 +33,12 @@
         "tag_id": "",
         "task_id": "我是禅道号",
         "response": "操作成功",
-        "token": "before"
+        "before": [{
+          "url" : "manager/pm_user/user_login",
+          "before_key" : "token",
+          "key" : "PmToken",
+          "is_header" : true
+        }]
       }
     ],
 

@@ -1,12 +1,11 @@
-package validation
+package json_key
 
 import (
 	"fmt"
-	"github.com/gavv/httpexpect"
 )
 
 func init() {
-	Register(new(TaskId))
+	RegisterJsonKey(new(TaskId))
 }
 
 /**
@@ -32,8 +31,8 @@ func (t *TaskId) GetJsonValue() interface{} {
 	return t.Value
 }
 
-func (t *TaskId) SetUpRun(params *map[string]interface{}) {
+func (t *TaskId) SetUpRun(params *J) {
 	fmt.Println("执行禅道号", t.Value)
 }
 
-func (t *TaskId) TearDownRun(res *httpexpect.Response, params *map[string]interface{}) {}
+func (t *TaskId) TearDownRun(params *J) {}
