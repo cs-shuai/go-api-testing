@@ -7,5 +7,5 @@ import (
 )
 
 func Test(t *testing.T) {
-	common.AutoTestRun(t, new(model.JsonTesting))
+	common.AutoTestRun(t, new(model.JsonTesting), new(model.JsonGroupTesting))
 }
